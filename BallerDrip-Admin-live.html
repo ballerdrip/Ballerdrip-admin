@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Baller Drip Admin</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--navy:#0a1628;--text:#1a1a1a;--muted:#666;--border:#e8e8e8;--red:#c41e3a;--bg:#f5f5f5}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+button,input,select,textarea{font-family:inherit}button{cursor:pointer}
+.login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:#fff}
+.login-screen .brand{font-size:28px;font-style:italic;font-weight:700;margin-bottom:8px}
+.login-screen h2{font-size:22px;margin-bottom:8px}
+.login-screen p{font-size:13px;color:var(--muted);margin-bottom:24px;text-align:center}
+.login-screen input{width:100%;max-width:320px;padding:14px 16px;border:1px solid var(--border);border-radius:8px;font-size:15px;margin-bottom:12px}
+.login-screen .btn-login{width:100%;max-width:320px;padding:14px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700}
+.admin-wrap{display:none;min-height:100vh}
+.admin-top{background:var(--navy);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}
+.admin-top h1{font-size:16px;font-weight:700}
+.admin-top a,.admin-top button{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 12px;border-radius:6px;font-size:12px;text-decoration:none;margin-left:6px}
+.admin-nav{display:flex;overflow-x:auto;background:#fff;border-bottom:1px solid var(--border)}
+.admin-nav button{flex-shrink:0;padding:12px 14px;border:none;background:none;font-size:12px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent}
+.admin-nav button.active{color:var(--navy);border-bottom-color:var(--navy)}
+.admin-content{padding:16px}
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-box{background:#fff;border-radius:10px;padding:16px;border:1px solid var(--border)}
+.stat-box .lbl{font-size:11px;color:var(--muted);margin-bottom:4px}
+.stat-box .val{font-size:22px;font-weight:800}
+.admin-table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;border:1px solid var(--border);font-size:12px}
+.admin-table th{background:#fafafa;padding:10px 8px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase}
+.admin-table td{padding:10px 8px;border-top:1px solid var(--border);vertical-align:middle}
+.admin-table select{padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px}
+.admin-table img.thumb{width:48px;height:48px;object-fit:cover;border-radius:6px;background:#eee}
+.btn-sm{padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:600}
+.btn-primary-sm{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-danger-sm{color:var(--red);border-color:var(--red)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:flex-end;justify-content:center;opacity:0;visibility:hidden;transition:.25s}
+.modal-bg.open{opacity:1;visibility:visible}
+.modal{background:#fff;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;border-radius:16px 16px 0 0;transform:translateY(40px);transition:.25s}
+.modal-bg.open .modal{transform:translateY(0)}
+.modal-h{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:2}
+.modal-h h3{font-size:16px;font-weight:700}
+.modal-h button{background:none;border:none;font-size:20px;color:var(--muted)}
+.modal-b{padding:20px}
+.form-g{margin-bottom:14px}
+.form-g label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+.form-g input,.form-g select,.form-g textarea{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-f{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;position:sticky;bottom:0;background:#fff}
+.modal-f button{flex:1;padding:13px;border-radius:8px;font-size:14px;font-weight:700;border:none}
+.btn-cancel{background:#f0f0f0;color:var(--text)}
+.btn-save{background:var(--navy);color:#fff}
+.check-row{display:flex;align-items:center;gap:8px}
+.check-row input{width:auto}
+.imgs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.img-slot{aspect-ratio:1;border-radius:8px;border:2px dashed var(--border);background:#fafafa;position:relative;overflow:hidden;cursor:pointer}
+.img-slot.has-img{border-style:solid;border-color:#ddd}
+.img-slot img{width:100%;height:100%;object-fit:cover}
+.img-slot .add-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;color:var(--muted);pointer-events:none}
+.img-slot .add-label span{font-size:20px;margin-bottom:2px}
+.img-slot .rm{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:none;font-size:12px;display:none;align-items:center;justify-content:center;z-index:2}
+.img-slot.has-img .rm{display:flex}
+.img-slot input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.img-count{font-size:11px;color:var(--muted);margin-top:6px}
+/* Homepage settings cards */
+.hp-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.hp-card h4{font-size:14px;margin-bottom:10px}
+.hp-preview{width:100%;height:120px;object-fit:cover;border-radius:8px;background:#eee;margin-bottom:10px}
+.hp-preview.sq{height:auto;aspect-ratio:1;max-width:140px}
+.hp-upload{display:inline-block;padding:8px 14px;background:var(--navy);color:#fff;border-radius:6px;font-size:12px;font-weight:600;position:relative;overflow:hidden}
+.hp-upload input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:12px 24px;border-radius:30px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:.3s;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+</style>
+</head>
+<body>
+<div class="login-screen" id="login-screen">
+  <div class="brand">Baller Drip</div>
+  <h2>Admin Login</h2>
+  <p>Products, homepage images, orders & inventory</p>
+  <input type="password" id="login-pw" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+  <button class="btn-login" onclick="doLogin()">Sign in</button>
+  <p style="margin-top:16px;font-size:12px;color:var(--muted)">Server admin password preferred. Local fallback for offline use only.</p>
+</div>
+
+<div class="admin-wrap" id="admin">
+  <div class="admin-top">
+    <h1>Baller Drip Admin</h1>
+    <div><button onclick="changePassword()">Change Password</button><button onclick="adminLogout()">Logout</button></div>
+  </div>
+  <div class="admin-nav">
+    <button class="active" onclick="adminTab('dash',this)">Dashboard</button>
+    <button onclick="adminTab('products',this)">Products</button>
+    <button onclick="adminTab('homepage',this)">Homepage</button>
+    <button onclick="adminTab('orders',this)">Orders</button>
+    <button onclick="adminTab('customers',this)">Customers</button>
+    <button onclick="adminTab('analytics',this)">Analytics</button>
+  </div>
+  <div class="admin-content">
+    <div id="atab-dash">
+      <div class="stat-row">
+        <div class="stat-box"><div class="lbl">Products</div><div class="val" id="as-prod">0</div></div>
+        <div class="stat-box"><div class="lbl">Orders</div><div class="val" id="as-ord">0</div></div>
+        <div class="stat-box"><div class="lbl">Customers</div><div class="val" id="as-cus">0</div></div>
+        <div class="stat-box"><div class="lbl">Revenue</div><div class="val" id="as-rev">₹0</div></div>
+      </div>
+      <h3 style="margin-bottom:10px;font-size:14px">Recent Orders</h3>
+      <div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>ID</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead><tbody id="as-recent"></tbody></table></div>
+    </div>
+
+    <div id="atab-products" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h3 style="font-size:15px">All Products</h3>
+        <button class="btn-sm btn-primary-sm" onclick="openProductForm()">+ Add Product</button>
+      </div>
+      <div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead><tbody id="as-prods"></tbody></table></div>
+    </div>
+
+    <div id="atab-homepage" style="display:none">
+      <h3 style="font-size:15px;margin-bottom:14px">Homepage</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Hero images, homepage texts (hero + marquee + promo), and category tiles.</p>
+
+      <div class="hp-card">
+        <h4>Hero Banner (rotates every 3 seconds — up to 5 images)</h4>
+        <div id="hero-thumbs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
+        <label class="hp-upload" id="hero-upload-label">Add Image<input type="file" accept="image/*" onchange="addHeroImg(event)"></label>
+      </div>
+
+      <div class="hp-card">
+        <h4>Homepage Texts</h4>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">These appear on the store homepage. Changes show after refresh / reopen store.</p>
+        <div class="form-g"><label>Hero tag (small line above title)</label><input type="text" id="ht-tag" placeholder="New Collection"></div>
+        <div class="form-row">
+          <div class="form-g"><label>Hero title line 1</label><input type="text" id="ht-line1" placeholder="PREMIUM"></div>
+          <div class="form-g"><label>Accent word (red)</label><input type="text" id="ht-accent" placeholder="JERSEY."></div>
+        </div>
+        <div class="form-g"><label>Hero title line 2</label><input type="text" id="ht-line2" placeholder="TIMELESS CULTURE."></div>
+        <div class="form-g"><label>Hero subtitle</label><input type="text" id="ht-sub" placeholder="Premium retro & club kits. Worn with pride."></div>
+        <div class="form-g"><label>Promo strip (emoji + text)</label><input type="text" id="ht-promo" placeholder="🇹🇭 Thailand Imported Jerseys"></div>
+        <div class="form-g">
+          <label>Moving marquee texts (up to 10 boxes — leave any blank to skip)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input type="text" id="ht-marquee-1" placeholder="Item 1 — e.g. Premium Fabric">
+            <input type="text" id="ht-marquee-2" placeholder="Item 2">
+            <input type="text" id="ht-marquee-3" placeholder="Item 3">
+            <input type="text" id="ht-marquee-4" placeholder="Item 4">
+            <input type="text" id="ht-marquee-5" placeholder="Item 5">
+            <input type="text" id="ht-marquee-6" placeholder="Item 6">
+            <input type="text" id="ht-marquee-7" placeholder="Item 7">
+            <input type="text" id="ht-marquee-8" placeholder="Item 8">
+            <input type="text" id="ht-marquee-9" placeholder="Item 9">
+            <input type="text" id="ht-marquee-10" placeholder="Item 10">
+          </div>
+        </div>
+        <button type="button" class="btn-sm btn-primary-sm" style="margin-top:6px" onclick="saveHomeTexts()">Save Homepage Texts</button>
+      </div>
+
+      <div class="hp-card">
+        <h4>Offer banner (below “Thailand Imported…” strip)</h4>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Optional. Up to 3 images rotate every 4 seconds. Title & subtitle show on a dark shade at the bottom of each image. Max ~1.5MB per image.</p>
+        <div class="form-g"><label>Offer title (optional)</label><input type="text" id="ht-offer-title" placeholder="e.g. Weekend Sale — 20% Off"></div>
+        <div class="form-g"><label>Offer subtitle (optional)</label><input type="text" id="ht-offer-sub" placeholder="e.g. Free shipping on 2+ jerseys. Ends Sunday."></div>
+        <button type="button" class="btn-sm btn-primary-sm" style="margin-bottom:12px" onclick="saveOfferTexts()">Save Offer Text</button>
+        <div id="offer-thumbs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
+        <label class="hp-upload" id="offer-upload-label">Add Offer Image<input type="file" accept="image/*" onchange="addOfferImg(event)"></label>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0 12px">
+        <h3 style="font-size:15px">Categories</h3>
+        <button class="btn-sm btn-primary-sm" onclick="openCatForm()">+ Add Category</button>
+      </div>
+      <div id="cat-list"></div>
+    </div>
+
+    <div id="atab-orders" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="font-size:14px">Orders</h3>
+        <button class="btn-sm btn-danger-sm" onclick="clearOrders()">Clear All Orders</button>
+      </div>
+      <div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>ID</th><th>Customer / Address</th><th>Items</th><th>Total</th><th>Status</th></tr></thead><tbody id="as-orders"></tbody></table></div>
+    </div>
+    <div id="atab-customers" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="font-size:14px">Customers</h3>
+        <button class="btn-sm btn-danger-sm" onclick="clearCustomers()">Clear All Customers</button>
+      </div>
+      <div style="overflow-x:auto"><table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Orders</th><th>Spent</th></tr></thead><tbody id="as-customers"></tbody></table></div>
+    </div>
+    <div id="atab-analytics" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="font-size:14px">Analytics</h3>
+        <button class="btn-sm btn-danger-sm" onclick="clearAnalytics()">Clear Analytics Data</button>
+      </div>
+      <div class="stat-row" style="margin-bottom:16px">
+        <div class="stat-box"><div class="lbl">Inventory Value</div><div class="val" id="as-inv">₹0</div></div>
+        <div class="stat-box"><div class="lbl">Avg Order Value</div><div class="val" id="as-aov">₹0</div></div>
+        <div class="stat-box"><div class="lbl">Total Revenue</div><div class="val" id="as-totrev">₹0</div></div>
+      </div>
+
+      <h4 style="margin:16px 0 8px;font-size:13px;color:var(--muted)">Revenue — Last 14 Days</h4>
+      <div id="as-revchart" style="display:flex;align-items:flex-end;gap:3px;height:120px;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:20px;overflow-x:auto"></div>
+
+      <h4 style="margin:16px 0 8px;font-size:13px;color:var(--muted)">Sales by Category</h4>
+      <div id="as-cats" style="margin-bottom:20px"></div>
+
+      <h4 style="margin:16px 0 8px;font-size:13px;color:var(--muted)">Top 5 Products by Revenue</h4>
+      <div style="overflow-x:auto;margin-bottom:20px"><table class="admin-table"><thead><tr><th>Product</th><th>Units Sold</th><th>Revenue</th></tr></thead><tbody id="as-topprods"></tbody></table></div>
+
+      <h4 style="margin:16px 0 8px;font-size:13px;color:var(--muted)">Orders by Status</h4>
+      <div id="as-status" class="stat-row"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="product-modal" onclick="if(event.target===this)closeProductForm()">
+  <div class="modal">
+    <div class="modal-h"><h3 id="pf-title">Add Product</h3><button onclick="closeProductForm()">✕</button></div>
+    <form onsubmit="saveProduct(event)">
+      <div class="modal-b">
+        <input type="hidden" id="pf-id">
+        <div class="form-g"><label>Product Images (up to 8) *</label><div class="imgs-grid" id="imgs-grid"></div><div class="img-count" id="img-count">0 / 8 images</div></div>
+        <div class="form-g"><label>Product Name *</label><input type="text" id="pf-name" required></div>
+        <div class="form-row">
+          <div class="form-g"><label>Category *</label><select id="pf-category" onchange="updateSubs()"><option value="">Loading…</option></select></div>
+          <div class="form-g"><label>Subcategory *</label><select id="pf-sub"></select></div>
+        </div>
+        <div class="form-g"><label>Price (₹) *</label><input type="number" id="pf-price" min="0" required></div>
+        <div class="form-row">
+          <div class="form-g"><label>Total Stock</label><input type="number" id="pf-stock" min="0" readonly style="opacity:.7"><small style="color:var(--muted)">Auto-computed from stock per size below</small></div>
+          <div class="form-g"><label>Badge</label><select id="pf-badge"><option value="">None</option><option value="NEW">NEW</option><option value="OUT">OUT</option></select></div>
+        </div>
+        <div class="form-g"><label>Sizes &amp; Stock per size *</label>
+          <div id="pf-sizes" style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+            <div class="pf-size-row" data-size="XS"><label class="check-row" style="margin:0;min-width:60px"><input type="checkbox" value="XS"> XS</label><input type="number" class="pf-size-stock" min="0" value="0" placeholder="Qty" disabled style="width:80px"></div>
+            <div class="pf-size-row" data-size="S"><label class="check-row" style="margin:0;min-width:60px"><input type="checkbox" value="S" checked> S</label><input type="number" class="pf-size-stock" min="0" value="0" placeholder="Qty" style="width:80px"></div>
+            <div class="pf-size-row" data-size="M"><label class="check-row" style="margin:0;min-width:60px"><input type="checkbox" value="M" checked> M</label><input type="number" class="pf-size-stock" min="0" value="0" placeholder="Qty" style="width:80px"></div>
+            <div class="pf-size-row" data-size="L"><label class="check-row" style="margin:0;min-width:60px"><input type="checkbox" value="L" checked> L</label><input type="number" class="pf-size-stock" min="0" value="0" placeholder="Qty" style="width:80px"></div>
+            <div class="pf-size-row" data-size="XL"><label class="check-row" style="margin:0;min-width:60px"><input type="checkbox" value="XL" checked> XL</label><input type="number" class="pf-size-stock" min="0" value="0" placeholder="Qty" style="width:80px"></div>
+            <div class="pf-size-row" data-size="XXL"><label class="check-row" style="margin:0;min-width:60px"><input type="checkbox" value="XXL" checked> XXL</label><input type="number" class="pf-size-stock" min="0" value="0" placeholder="Qty" style="width:80px"></div>
+            <div class="pf-size-row" data-size="3XL"><label class="check-row" style="margin:0;min-width:60px"><input type="checkbox" value="3XL"> 3XL</label><input type="number" class="pf-size-stock" min="0" value="0" placeholder="Qty" disabled style="width:80px"></div>
+          </div>
+        </div>
+        <div class="form-g"><label>Description</label><textarea id="pf-desc" rows="2"></textarea></div>
+        <div class="check-row"><input type="checkbox" id="pf-featured"><label for="pf-featured" style="margin:0;font-size:13px">Featured on home</label></div>
+      </div>
+      <div class="modal-f"><button type="button" class="btn-cancel" onclick="closeProductForm()">Cancel</button><button type="submit" class="btn-save">Save Product</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-bg" id="cat-modal" onclick="if(event.target===this)closeCatForm()">
+  <div class="modal">
+    <div class="modal-h"><h3 id="cf-title">Add Category</h3><button onclick="closeCatForm()">✕</button></div>
+    <div class="modal-b">
+      <input type="hidden" id="cf-id">
+      <div class="form-g"><label>Category Name *</label><input type="text" id="cf-name" placeholder="e.g. Retro Jersey"></div>
+      <div class="form-g"><label>Display Label *</label><input type="text" id="cf-label" placeholder="e.g. RETRO"></div>
+      <div class="form-g">
+        <label>Category Image</label>
+        <img id="cf-preview" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;background:#eee;margin-bottom:8px;display:none">
+        <label class="hp-upload">Upload Image<input type="file" accept="image/*" onchange="cfImg(event)"></label>
+        <input type="hidden" id="cf-image">
+      </div>
+      <div class="check-row" style="margin-top:12px"><input type="checkbox" id="cf-all"><label for="cf-all" style="margin:0;font-size:13px">This is "All products" tile (opens full shop)</label></div>
+    </div>
+    <div class="modal-f">
+      <button type="button" class="btn-cancel" onclick="closeCatForm()">Cancel</button>
+      <button type="button" class="btn-save" onclick="saveCategory()">Save Category</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const K={p:'bd2_products',o:'bd2_orders',c:'bd2_customers',auth:'bd2_auth',s:'bd2_settings',pw:'bd2_pw',pwHash:'bd2_pw_hash',adminTok:'bd2_admin_token',fail:'bd2_login_fails'};
+const BACKEND_URL=(window.BALLERDRIP_API_URL||localStorage.getItem('bd2_api_url')||'https://ballerdrip-backend.onrender.com').replace(/\/$/,'');
+function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+async function sha256Hex(str){
+  const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function getFailState(){try{return JSON.parse(localStorage.getItem(K.fail)||'{"n":0,"until":0}');}catch(e){return {n:0,until:0};}}
+function setFailState(s){localStorage.setItem(K.fail,JSON.stringify(s));}
+function isLockedOut(){const s=getFailState();return s.until && Date.now()<s.until;}
+function registerFail(){const s=getFailState();s.n=(s.n||0)+1;if(s.n>=5){s.until=Date.now()+15*60*1000;s.n=0;}setFailState(s);return s;}
+function clearFails(){localStorage.removeItem(K.fail);}
+
+function getPw(){return localStorage.getItem(K.pw)||'';}
+function hasCustomPw(){return !!(localStorage.getItem(K.pwHash)||localStorage.getItem(K.pw));}
+
+const MAX_IMGS=8;
+let formImages=[];
+const DEF_SETTINGS={
+hero:'https://picsum.photos/seed/jerseyhero/900/500',
+heroes:['https://picsum.photos/seed/jerseyhero/900/500'],
+categories:[
+{id:'retro',name:'Retro Jersey',label:'RETRO',image:'https://picsum.photos/seed/cat1/200/200'},
+{id:'club',name:'26/27 Club Jerseys',label:'26/27 CLUB',image:'https://picsum.photos/seed/cat2/200/200'},
+{id:'intl',name:'International Jersey',label:'INTERNATIONAL',image:'https://picsum.photos/seed/cat3/200/200'},
+{id:'all',name:'',label:'ALL',image:'https://picsum.photos/seed/cat4/200/200',isAll:true}
+],
+heroTag:'New Collection',
+heroTitleLine1:'PREMIUM',
+heroTitleAccent:'JERSEY.',
+heroTitleLine2:'TIMELESS CULTURE.',
+heroSubtitle:'Premium retro & club kits. Worn with pride.',
+promoFlag:'🇹🇭',
+promoText:'Thailand Imported Jerseys',
+marqueeItems:['Premium Fabric','Fearless Fashion','Unbeatable Quality','Exclusive Collection','Player Edition','Street Ready','Limited Stock','Worn With Pride'],
+offerImages:[],
+offerTitle:'',
+offerSubtitle:''
+};
+function normalizeProduct(p){
+  if(!p.images)p.images=p.image?[p.image]:[];
+  if(!p.image&&p.images.length)p.image=p.images[0];
+  if(!p.sizeStock||typeof p.sizeStock!=='object'){
+    p.sizeStock={};
+    const sizes=Array.isArray(p.sizes)?p.sizes:[];
+    if(sizes.length){
+      const base=Math.floor((Number(p.stock)||0)/sizes.length);
+      let rem=(Number(p.stock)||0)-base*sizes.length;
+      sizes.forEach(s=>{ p.sizeStock[s]=base+(rem>0?1:0); if(rem>0)rem--; });
+    }
+  }else{
+    const sizes=Array.isArray(p.sizes)?p.sizes:[];
+    const next={};
+    sizes.forEach(s=>{ next[s]=Number(p.sizeStock[s])||0; });
+    p.sizeStock=next;
+  }
+  p.stock=Object.values(p.sizeStock).reduce((a,b)=>a+(Number(b)||0),0);
+  return p;
+}
+const DEF_P=[
+{id:'p1',name:'Classic Retro 90s Home Player',category:'Retro Jersey',sub:'Player version',price:899,stock:45,images:['https://picsum.photos/seed/p1a/400/400'],image:'https://picsum.photos/seed/p1a/400/400',desc:'Authentic player-version retro jersey.',sizes:['S','M','L','XL','XXL'],featured:true,badge:'NEW'},
+{id:'p2',name:'Vintage Away 98 Player',category:'Retro Jersey',sub:'Player version',price:949,stock:32,images:['https://picsum.photos/seed/p2a/400/400'],image:'https://picsum.photos/seed/p2a/400/400',desc:'Player-spec retro away kit.',sizes:['S','M','L','XL'],featured:false,badge:'NEW'},
+{id:'p3',name:'Legend Edition 2000',category:'Retro Jersey',sub:'Player edition',price:1199,stock:18,images:['https://picsum.photos/seed/p3a/400/400'],image:'https://picsum.photos/seed/p3a/400/400',desc:'Player Edition – higher grade.',sizes:['M','L','XL','XXL'],featured:true,badge:'NEW'},
+{id:'p4',name:'Icon Series 94 Player Edition',category:'Retro Jersey',sub:'Player edition',price:1299,stock:12,images:['https://picsum.photos/seed/p4a/400/400'],image:'https://picsum.photos/seed/p4a/400/400',desc:'Exclusive Player Edition.',sizes:['S','M','L','XL'],featured:false,badge:''},
+{id:'p5',name:'26/27 Home Player Version',category:'26/27 Club Jerseys',sub:'Player version',price:1099,stock:60,images:['https://picsum.photos/seed/p5a/400/400'],image:'https://picsum.photos/seed/p5a/400/400',desc:'Official 26/27 home Player Version.',sizes:['S','M','L','XL','XXL'],featured:true,badge:'NEW'},
+{id:'p6',name:'26/27 Away Player Version',category:'26/27 Club Jerseys',sub:'Player version',price:1099,stock:55,images:['https://picsum.photos/seed/p6a/400/400'],image:'https://picsum.photos/seed/p6a/400/400',desc:'26/27 Away Player Version.',sizes:['S','M','L','XL','XXL'],featured:false,badge:'NEW'},
+{id:'p7',name:'26/27 Home Fan Version',category:'26/27 Club Jerseys',sub:'Fan version',price:749,stock:120,images:['https://picsum.photos/seed/p7a/400/400'],image:'https://picsum.photos/seed/p7a/400/400',desc:'Fan Version 26/27 Home.',sizes:['XS','S','M','L','XL','XXL'],featured:true,badge:'NEW'},
+{id:'p8',name:'26/27 Third Fan Version',category:'26/27 Club Jerseys',sub:'Fan version',price:749,stock:0,images:['https://picsum.photos/seed/p8a/400/400'],image:'https://picsum.photos/seed/p8a/400/400',desc:'26/27 Third Fan Version.',sizes:['S','M','L','XL'],featured:false,badge:'OUT'},
+{id:'p9',name:'National Team Home Player',category:'International Jersey',sub:'Player version',price:999,stock:40,images:['https://picsum.photos/seed/p9a/400/400'],image:'https://picsum.photos/seed/p9a/400/400',desc:'International Home Player Version.',sizes:['S','M','L','XL','XXL'],featured:true,badge:'NEW'},
+{id:'p10',name:'National Team Away Fan',category:'International Jersey',sub:'Fan version',price:699,stock:80,images:['https://picsum.photos/seed/p10a/400/400'],image:'https://picsum.photos/seed/p10a/400/400',desc:'International Away Fan Version.',sizes:['S','M','L','XL','XXL'],featured:false,badge:''},
+{id:'p11',name:'World Cup Player Edition',category:'International Jersey',sub:'Player edition',price:1399,stock:15,images:['https://picsum.photos/seed/p11a/400/400'],image:'https://picsum.photos/seed/p11a/400/400',desc:'Limited Player Edition international.',sizes:['M','L','XL'],featured:true,badge:'NEW'},
+{id:'p12',name:'Continental Player Edition',category:'International Jersey',sub:'Player edition',price:1349,stock:22,images:['https://picsum.photos/seed/p12a/400/400'],image:'https://picsum.photos/seed/p12a/400/400',desc:'Player Edition continental jersey.',sizes:['S','M','L','XL','XXL'],featured:false,badge:'NEW'}
+];
+const DEF_O=[{id:'ORD-1001',customer:'Alex Rivera',email:'alex@email.com',items:[{id:'p5',name:'26/27 Home Player Version',qty:1,price:1099,size:'L'}],total:1099,status:'delivered',date:'2026-08-10'},{id:'ORD-1002',customer:'Jordan Lee',email:'jordan@email.com',items:[{id:'p3',name:'Legend Edition 2000',qty:2,price:1199,size:'M'}],total:2398,status:'shipped',date:'2026-08-15'},{id:'ORD-1003',customer:'Sam Patel',email:'sam@email.com',items:[{id:'p11',name:'World Cup Player Edition',qty:1,price:1399,size:'XL'}],total:1399,status:'processing',date:'2026-08-18'},{id:'ORD-1004',customer:'Taylor Brooks',email:'taylor@email.com',items:[{id:'p7',name:'26/27 Home Fan Version',qty:1,price:749,size:'S'}],total:749,status:'pending',date:'2026-08-20'}];
+const DEF_C=[{id:'C1',name:'Alex Rivera',email:'alex@email.com',orders:3,spent:2897},{id:'C2',name:'Jordan Lee',email:'jordan@email.com',orders:2,spent:2398},{id:'C3',name:'Sam Patel',email:'sam@email.com',orders:1,spent:1399},{id:'C4',name:'Taylor Brooks',email:'taylor@email.com',orders:1,spent:749}];
+function gs(k,d){const v=localStorage.getItem(k);if(!v){localStorage.setItem(k,JSON.stringify(d));return JSON.parse(JSON.stringify(d));}return JSON.parse(v);}
+function ss(k,v){
+  try{
+    localStorage.setItem(k,JSON.stringify(v));
+    return true;
+  }catch(err){
+    toast('Storage full! Remove some product photos or use fewer/smaller images, then try again.');
+    console.error('Storage save failed for '+k, err);
+    return false;
+  }
+}
+// Shrinks an uploaded image (max dimension + JPEG compression) before it's turned into
+// a base64 string, so a handful of product photos don't silently blow past the browser's
+// local storage limit (which is what was causing saves to fail with no warning).
+// Product photos use tighter defaults so multiple products can be saved without hitting quota.
+function compressImage(file, maxDim=700, quality=0.62){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        let w=img.width,h=img.height;
+        if(w>maxDim||h>maxDim){
+          if(w>h){h=Math.round(h*maxDim/w);w=maxDim;}else{w=Math.round(w*maxDim/h);h=maxDim;}
+        }
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        const ctx=canvas.getContext('2d');
+        ctx.fillStyle='#fff';
+        ctx.fillRect(0,0,w,h);
+        ctx.drawImage(img,0,0,w,h);
+        let dataUrl=canvas.toDataURL('image/jpeg',quality);
+        // If still too large for storage, re-compress harder once
+        if(dataUrl.length>280000){
+          dataUrl=canvas.toDataURL('image/jpeg',0.48);
+        }
+        if(dataUrl.length>380000){
+          reject(new Error('Image still too large after compression'));
+          return;
+        }
+        resolve(dataUrl);
+      };
+      img.onerror=reject;
+      img.src=ev.target.result;
+    };
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+}
+/* ===== IndexedDB for products (avoids localStorage 5MB limit) ===== */
+const IDB_NAME='BallerDripDB', IDB_VER=1, IDB_STORE='products';
+let _prodCache=null; // in-memory cache so getP() stays synchronous for the rest of the UI
+
+function openIDB(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(IDB_NAME,IDB_VER);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+
+async function idbGetProducts(){
+  try{
+    const db=await openIDB();
+    return await new Promise((resolve,reject)=>{
+      const tx=db.transaction(IDB_STORE,'readonly');
+      const req=tx.objectStore(IDB_STORE).get('all');
+      req.onsuccess=()=>resolve(req.result||null);
+      req.onerror=()=>reject(req.error);
+    });
+  }catch(e){console.error('IDB read failed',e);return null;}
+}
+
+async function idbSetProducts(list){
+  try{
+    const db=await openIDB();
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(IDB_STORE,'readwrite');
+      tx.objectStore(IDB_STORE).put(list,'all');
+      tx.oncomplete=()=>resolve();
+      tx.onerror=()=>reject(tx.error);
+    });
+    return true;
+  }catch(e){
+    console.error('IDB write failed',e);
+    toast('Could not save products (storage error)');
+    return false;
+  }
+}
+
+// One-time migration: if localStorage still has products with base64, move them to IDB
+async function migrateProductsIfNeeded(){
+  const fromIdb=await idbGetProducts();
+  if(fromIdb&&Array.isArray(fromIdb)&&fromIdb.length){
+    _prodCache=fromIdb.map(normalizeProduct);
+    return;
+  }
+  // Fall back to localStorage (or defaults)
+  let fromLs=null;
+  try{fromLs=JSON.parse(localStorage.getItem(K.p)||'null');}catch(e){}
+  const list=(fromLs&&Array.isArray(fromLs)&&fromLs.length)?fromLs:JSON.parse(JSON.stringify(DEF_P));
+  _prodCache=list.map(normalizeProduct);
+  await idbSetProducts(_prodCache);
+  // Clear the old localStorage products key so it no longer eats quota
+  try{localStorage.removeItem(K.p);}catch(e){}
+}
+
+function getP(){
+  if(!_prodCache){
+    // Sync fallback (before migration finishes) — prefer empty over blocking
+    try{
+      const v=localStorage.getItem(K.p);
+      if(v) return JSON.parse(v).map(normalizeProduct);
+    }catch(e){}
+    return JSON.parse(JSON.stringify(DEF_P)).map(normalizeProduct);
+  }
+  return _prodCache.map(normalizeProduct);
+}
+
+function saveP(v){
+  _prodCache=v.map(normalizeProduct);
+  // Write to IndexedDB (async). Return true immediately so UI stays responsive.
+  // If the write fails, the toast will still appear.
+  idbSetProducts(_prodCache);
+  // Also try to keep a tiny flag in localStorage so the store knows to look in IDB
+  try{localStorage.setItem('bd2_products_idb','1');}catch(e){}
+  return true;
+}
+
+function getO(){return gs(K.o,DEF_O);} function saveO(v){ss(K.o,v);}
+function getC(){return gs(K.c,DEF_C);} function saveC(v){ss(K.c,v);}
+function getSettings(){return gs(K.s,DEF_SETTINGS);} function saveSettings(v){ss(K.s,v);}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+function adminTab(name,btn){
+  document.querySelectorAll('.admin-nav button').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  ['dash','products','homepage','orders','customers','analytics'].forEach(t=>{const el=document.getElementById('atab-'+t);if(el)el.style.display=t===name?'block':'none';});
+  if(name==='dash')renderDash();
+  if(name==='products')renderAdminProds();
+  if(name==='homepage')renderHomepage();
+  if(name==='orders')renderAdminOrders();
+  if(name==='customers')renderAdminCusts();
+  if(name==='analytics')renderAdminAnalytics();
+}
+function renderDash(){const p=getP(),o=getO(),c=getC();document.getElementById('as-prod').textContent=p.length;document.getElementById('as-ord').textContent=o.length;document.getElementById('as-cus').textContent=c.length;document.getElementById('as-rev').textContent='₹'+o.reduce((s,x)=>s+(x.status!=='cancelled'?x.total:0),0);document.getElementById('as-recent').innerHTML=o.slice(0,5).map(x=>`<tr><td>${escHtml(x.id)}</td><td>${escHtml(x.customer)}</td><td>₹${Number(x.total)||0}</td><td>${escHtml(x.status)}</td></tr>`).join('');}
+function renderAdminProds(){document.getElementById('as-prods').innerHTML=getP().map(p=>{const img=(p.images&&p.images[0])||p.image||'';return `<tr><td><img class="thumb" src="${img}"></td><td><b>${p.name}</b><br><small style="color:#999">${p.sub} · ${(p.images||[]).length} img</small></td><td>${p.category.replace(' Jerseys','').replace(' Jersey','')}</td><td>₹${p.price}</td><td style="color:${p.stock<20?'#c41e3a':'inherit'}">${p.stock}</td><td><button class="btn-sm" onclick="editProduct('${p.id}')">Edit</button> <button class="btn-sm btn-danger-sm" onclick="delProd('${p.id}')">Del</button></td></tr>`;}).join('');}
+
+function renderHomepage(){
+  const s=getSettings();
+  renderHeroThumbs();
+  renderOfferThumbs();
+  document.getElementById('ht-offer-title').value=s.offerTitle||'';
+  document.getElementById('ht-offer-sub').value=s.offerSubtitle||'';
+  // Homepage texts
+  document.getElementById('ht-tag').value=s.heroTag!=null?s.heroTag:(DEF_SETTINGS.heroTag||'');
+  document.getElementById('ht-line1').value=s.heroTitleLine1!=null?s.heroTitleLine1:(DEF_SETTINGS.heroTitleLine1||'');
+  document.getElementById('ht-accent').value=s.heroTitleAccent!=null?s.heroTitleAccent:(DEF_SETTINGS.heroTitleAccent||'');
+  document.getElementById('ht-line2').value=s.heroTitleLine2!=null?s.heroTitleLine2:(DEF_SETTINGS.heroTitleLine2||'');
+  document.getElementById('ht-sub').value=s.heroSubtitle!=null?s.heroSubtitle:(DEF_SETTINGS.heroSubtitle||'');
+  const flagVal=s.promoFlag!=null?s.promoFlag:(DEF_SETTINGS.promoFlag||'');
+  const textVal=s.promoText!=null?s.promoText:(DEF_SETTINGS.promoText||'');
+  document.getElementById('ht-promo').value=(flagVal?flagVal+' ':'')+textVal;
+  const items=s.marqueeItems||DEF_SETTINGS.marqueeItems||[];
+  for(let i=1;i<=10;i++){const el=document.getElementById('ht-marquee-'+i);if(el)el.value=items[i-1]||'';}
+  const cats=s.categories||DEF_SETTINGS.categories;
+  document.getElementById('cat-list').innerHTML=cats.map((c,i)=>`
+    <div class="hp-card" style="display:flex;gap:12px;align-items:center">
+      <img src="${c.image}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;background:#eee;flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px">${c.label}</div>
+        <div style="font-size:12px;color:var(--muted)">${c.isAll?'Opens full shop':c.name}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <button class="btn-sm" onclick="editCategory(${i})">Edit</button>
+        <button class="btn-sm btn-danger-sm" onclick="delCategory(${i})">Del</button>
+      </div>
+    </div>`).join('');
+}
+function getHeroList(){
+  const s=getSettings();
+  let list=s.heroes;
+  if(!list||!list.length) list=s.hero?[s.hero]:[DEF_SETTINGS.hero];
+  return list.slice(0,5);
+}
+function renderHeroThumbs(){
+  const wrap=document.getElementById('hero-thumbs');
+  if(!wrap)return;
+  const list=getHeroList();
+  wrap.innerHTML=list.map((src,i)=>`
+    <div style="position:relative">
+      <img src="${src}" style="width:90px;height:60px;object-fit:cover;border-radius:6px;background:#eee">
+      <button type="button" onclick="removeHeroImg(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#e11;color:#fff;border:none;font-size:12px;line-height:1;cursor:pointer">&times;</button>
+    </div>`).join('');
+  const label=document.getElementById('hero-upload-label');
+  if(label) label.style.display=list.length>=5?'none':'inline-block';
+}
+function addHeroImg(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Select an image');return;}
+  if(file.size>8*1024*1024){toast('Max ~8MB before compression');return;}
+  const s=getSettings();
+  let list=getHeroList();
+  if(list.length>=5){toast('Max 5 images — remove one first');return;}
+  compressImage(file,1000,0.70).then(dataUrl=>{
+    list=list.concat([dataUrl]);
+    s.heroes=list;
+    delete s.hero;
+    saveSettings(s);
+    renderHeroThumbs();
+    toast('Image added');
+  }).catch(()=>toast('Could not process that image'));
+  e.target.value='';
+}
+function removeHeroImg(i){
+  const s=getSettings();
+  let list=getHeroList();
+  if(list.length<=1){toast('Keep at least 1 image');return;}
+  list.splice(i,1);
+  s.heroes=list;
+  saveSettings(s);
+  renderHeroThumbs();
+  toast('Image removed');
+}
+function saveHomeTexts(){
+  const s=getSettings();
+  s.heroTag=document.getElementById('ht-tag').value.trim();
+  s.heroTitleLine1=document.getElementById('ht-line1').value.trim();
+  s.heroTitleAccent=document.getElementById('ht-accent').value.trim();
+  s.heroTitleLine2=document.getElementById('ht-line2').value.trim();
+  s.heroSubtitle=document.getElementById('ht-sub').value.trim();
+  const promoCombined=document.getElementById('ht-promo').value.trim();
+  const promoParts=promoCombined.split(/\s+/);
+  const firstWord=promoParts[0]||'';
+  const looksLikeEmoji=/\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(firstWord);
+  if(looksLikeEmoji){
+    s.promoFlag=firstWord;
+    s.promoText=promoParts.slice(1).join(' ');
+  }else{
+    s.promoFlag='';
+    s.promoText=promoCombined;
+  }
+  const collected=[];
+  for(let i=1;i<=10;i++){const el=document.getElementById('ht-marquee-'+i);const v=el?el.value.trim():'';if(v)collected.push(v);}
+  s.marqueeItems=collected;
+  if(!s.marqueeItems.length) s.marqueeItems=[...(DEF_SETTINGS.marqueeItems||[])];
+  saveSettings(s);
+  toast('Homepage texts saved');
+}
+function saveOfferTexts(){
+  const s=getSettings();
+  s.offerTitle=document.getElementById('ht-offer-title').value.trim();
+  s.offerSubtitle=document.getElementById('ht-offer-sub').value.trim();
+  saveSettings(s);
+  toast(s.offerTitle||s.offerSubtitle?'Offer text saved':'Offer text cleared');
+}
+function getOfferList(){
+  const s=getSettings();
+  const list=s.offerImages;
+  return Array.isArray(list)?list.slice(0,3):[];
+}
+function renderOfferThumbs(){
+  const wrap=document.getElementById('offer-thumbs');
+  if(!wrap)return;
+  const list=getOfferList();
+  wrap.innerHTML=list.map((src,i)=>`
+    <div style="position:relative">
+      <img src="${src}" style="width:88px;height:88px;object-fit:cover;border-radius:8px;background:#eee">
+      <button type="button" onclick="removeOfferImg(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#e11;color:#fff;border:none;font-size:12px;line-height:1;cursor:pointer">&times;</button>
+    </div>`).join('') || '<span style="font-size:12px;color:var(--muted)">No offer images — banner hidden on store</span>';
+  const label=document.getElementById('offer-upload-label');
+  if(label) label.style.display=list.length>=3?'none':'inline-block';
+}
+function addOfferImg(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Select an image');return;}
+  if(file.size>8*1024*1024){toast('Max ~8MB before compression');return;}
+  const s=getSettings();
+  let list=getOfferList();
+  if(list.length>=3){toast('Max 3 offer images');return;}
+  compressImage(file,1000,0.70).then(dataUrl=>{
+    list=list.concat([dataUrl]);
+    s.offerImages=list;
+    saveSettings(s);
+    renderOfferThumbs();
+    toast('Offer image added');
+  }).catch(()=>toast('Could not process that image'));
+  e.target.value='';
+}
+function removeOfferImg(i){
+  const s=getSettings();
+  let list=getOfferList();
+  list.splice(i,1);
+  s.offerImages=list;
+  saveSettings(s);
+  renderOfferThumbs();
+  toast(list.length?'Offer image removed':'Offer banner hidden');
+}
+let cfImageData='';
+function openCatForm(cat=null,idx=null){
+  document.getElementById('cf-id').value=idx!==null?idx:'';
+  document.getElementById('cf-name').value=cat?cat.name:'';
+  document.getElementById('cf-label').value=cat?cat.label:'';
+  document.getElementById('cf-all').checked=cat?!!cat.isAll:false;
+  cfImageData=cat?cat.image:'';
+  const prev=document.getElementById('cf-preview');
+  if(cfImageData){prev.src=cfImageData;prev.style.display='block';}else{prev.style.display='none';}
+  document.getElementById('cf-title').textContent=cat?'Edit Category':'Add Category';
+  document.getElementById('cat-modal').classList.add('open');
+}
+function closeCatForm(){document.getElementById('cat-modal').classList.remove('open');}
+function cfImg(e){
+  const file=e.target.files[0];if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Select image');return;}
+  if(file.size>8*1024*1024){toast('Max ~8MB before compression');return;}
+  compressImage(file,600,0.68).then(dataUrl=>{
+    cfImageData=dataUrl;
+    const prev=document.getElementById('cf-preview');
+    prev.src=cfImageData;prev.style.display='block';
+  }).catch(()=>toast('Could not process that image'));
+}
+function saveCategory(){
+  const name=document.getElementById('cf-name').value.trim();
+  const label=document.getElementById('cf-label').value.trim();
+  const isAll=document.getElementById('cf-all').checked;
+  if(!label){toast('Label required');return;}
+  if(!isAll&&!name){toast('Name required');return;}
+  if(!cfImageData){toast('Upload an image');return;}
+  const s=getSettings();
+  if(!s.categories) s.categories=JSON.parse(JSON.stringify(DEF_SETTINGS.categories));
+  const idx=document.getElementById('cf-id').value;
+  const data={id:idx!==''?(s.categories[parseInt(idx)]?.id||('c'+Date.now())):('c'+Date.now()),name:isAll?'':name,label,image:cfImageData,isAll};
+  if(idx!=='') s.categories[parseInt(idx)]=data;
+  else s.categories.push(data);
+  saveSettings(s);
+  closeCatForm();
+  renderHomepage();
+  // also update product category dropdown options
+  toast(idx!==''?'Category updated':'Category added');
+}
+function editCategory(i){const s=getSettings();const cats=s.categories||DEF_SETTINGS.categories;openCatForm(cats[i],i);}
+function delCategory(i){if(!confirm('Delete this category?'))return;const s=getSettings();if(!s.categories)s.categories=JSON.parse(JSON.stringify(DEF_SETTINGS.categories));s.categories.splice(i,1);saveSettings(s);renderHomepage();toast('Category deleted');}
+
+function renderImgSlots(){const grid=document.getElementById('imgs-grid');let html='';for(let i=0;i<MAX_IMGS;i++){if(i<formImages.length){html+=`<div class="img-slot has-img"><img src="${formImages[i]}"><button type="button" class="rm" onclick="removeImg(${i})">✕</button></div>`;}else if(i===formImages.length){html+=`<div class="img-slot"><input type="file" accept="image/*" onchange="addImg(event)"><div class="add-label"><span>+</span>Add</div></div>`;}else{html+=`<div class="img-slot" style="opacity:0.4"><div class="add-label"><span>+</span></div></div>`;}}grid.innerHTML=html;document.getElementById('img-count').textContent=formImages.length+' / '+MAX_IMGS+' images';}
+function addImg(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Select image');return;}
+  if(file.size>8*1024*1024){toast('Max ~8MB before compression');return;}
+  if(formImages.length>=MAX_IMGS){toast('Max 8 images');return;}
+  const slot=e.target.closest('.img-slot');
+  if(slot) slot.style.opacity='0.5';
+  compressImage(file).then(dataUrl=>{
+    formImages.push(dataUrl);
+    renderImgSlots();
+  }).catch(err=>{
+    console.error(err);
+    toast(err&&err.message&&err.message.includes('too large')?'Image too large even after compression — try a smaller photo':'Could not process that image');
+    renderImgSlots();
+  });
+  e.target.value='';
+}
+function removeImg(i){formImages.splice(i,1);renderImgSlots();}
+function fillCatOptions(selected){const s=getSettings();const cats=(s.categories||DEF_SETTINGS.categories).filter(c=>!c.isAll&&c.name);const sel=document.getElementById('pf-category');sel.innerHTML=cats.map(c=>`<option value="${c.name}" ${c.name===selected?'selected':''}>${c.name}</option>`).join('')||'<option value="Retro Jersey">Retro Jersey</option>';}
+function updateSubs(){const cur=document.getElementById('pf-sub').value;const opts=['Player version','Fan version','Player edition'];document.getElementById('pf-sub').innerHTML=opts.map(s=>`<option value="${s}" ${s===cur?'selected':''}>${s}</option>`).join('');}
+function setSizeChecks(selected,sizeStock){
+  const sel=selected&&selected.length?selected:['S','M','L','XL','XXL'];
+  document.querySelectorAll('#pf-sizes .pf-size-row').forEach(row=>{
+    const cb=row.querySelector('input[type=checkbox]');
+    const qty=row.querySelector('.pf-size-stock');
+    const isChecked=sel.includes(cb.value);
+    cb.checked=isChecked;
+    qty.disabled=!isChecked;
+    qty.value=(sizeStock&&sizeStock[cb.value]!=null)?sizeStock[cb.value]:0;
+  });
+  updatePfTotalStock();
+}
+function getSizeChecks(){
+  return [...document.querySelectorAll('#pf-sizes input[type=checkbox]:checked')].map(cb=>cb.value);
+}
+function getSizeStockMap(){
+  const map={};
+  document.querySelectorAll('#pf-sizes .pf-size-row').forEach(row=>{
+    const cb=row.querySelector('input[type=checkbox]');
+    if(cb.checked){
+      const qty=row.querySelector('.pf-size-stock');
+      map[cb.value]=Math.max(0,parseInt(qty.value)||0);
+    }
+  });
+  return map;
+}
+function updatePfTotalStock(){
+  const total=Object.values(getSizeStockMap()).reduce((a,b)=>a+b,0);
+  const stockInput=document.getElementById('pf-stock');
+  if(stockInput)stockInput.value=total;
+}
+// Wire up size checkbox + qty input interactivity once, at load time.
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('#pf-sizes .pf-size-row').forEach(row=>{
+    const cb=row.querySelector('input[type=checkbox]');
+    const qty=row.querySelector('.pf-size-stock');
+    cb.addEventListener('change',()=>{
+      qty.disabled=!cb.checked;
+      if(!cb.checked)qty.value=0;
+      updatePfTotalStock();
+    });
+    qty.addEventListener('input',updatePfTotalStock);
+  });
+});
+function openProductForm(product=null){
+  document.getElementById('pf-id').value=product?product.id:'';
+  document.getElementById('pf-name').value=product?product.name:'';
+  fillCatOptions(product?product.category:null);
+  updateSubs();
+  if(product){
+    document.getElementById('pf-category').value=product.category;
+    document.getElementById('pf-sub').value=product.sub;
+  }
+  document.getElementById('pf-price').value=product?product.price:'';
+  document.getElementById('pf-badge').value=product?(product.badge||''):'NEW';
+  setSizeChecks(product?product.sizes:null, product?product.sizeStock:null);
+  document.getElementById('pf-desc').value=product?product.desc:'';
+  document.getElementById('pf-featured').checked=product?!!product.featured:false;
+  document.getElementById('pf-title').textContent=product?'Edit Product':'Add Product';
+  formImages=product?[...(product.images||(product.image?[product.image]:[]))]:[];
+  renderImgSlots();
+  document.getElementById('product-modal').classList.add('open');
+}
+function closeProductForm(){
+  document.getElementById('product-modal').classList.remove('open');
+  formImages=[];
+  const grid=document.getElementById('imgs-grid');
+  if(grid) grid.innerHTML='';
+}
+function saveProduct(e){
+  e.preventDefault();
+  if(formImages.length===0){toast('Add at least 1 image');return;}
+  const sizes=getSizeChecks();
+  if(!sizes.length){toast('Select at least one size');return;}
+  const sizeStock=getSizeStockMap();
+  const totalStock=Object.values(sizeStock).reduce((a,b)=>a+b,0);
+  const id=document.getElementById('pf-id').value;
+  const prods=getP();
+  const data={
+    id:id||('p'+Date.now()),
+    name:document.getElementById('pf-name').value.trim(),
+    category:document.getElementById('pf-category').value,
+    sub:document.getElementById('pf-sub').value,
+    price:parseInt(document.getElementById('pf-price').value)||0,
+    stock:totalStock,
+    sizeStock:sizeStock,
+    badge:document.getElementById('pf-badge').value,
+    images:[...formImages],
+    image:formImages[0],
+    sizes:sizes,
+    desc:document.getElementById('pf-desc').value.trim(),
+    featured:document.getElementById('pf-featured').checked
+  };
+  if(data.stock===0)data.badge='OUT';
+  else if(data.badge==='OUT')data.badge=''; // restocked: clear stale OUT badge so it doesn't keep hiding the product
+  if(id){const i=prods.findIndex(x=>x.id===id);if(i>=0)prods[i]=data;}
+  else prods.push(data);
+  const ok=saveP(prods);
+  if(!ok)return; // ss() already showed the storage-full toast
+  closeProductForm();
+  renderAdminProds();
+  toast(id?'Updated':'Added');
+}
+function editProduct(id){const p=getP().find(x=>x.id===id);if(p)openProductForm(p);}
+function delProd(id){if(!confirm('Delete?'))return;saveP(getP().filter(x=>x.id!==id));renderAdminProds();toast('Deleted');}
+function renderAdminOrders(){
+  document.getElementById('as-orders').innerHTML=getO().map(o=>{
+    const addr=o.address||{};
+    const addrLine=[addr.door,addr.street,addr.city,addr.state,addr.pin].filter(Boolean).join(', ');
+    const phone=o.phone||'';
+    return `<tr>
+      <td>${o.id}<br><small style="color:#999">${o.date||''}</small></td>
+      <td>${o.customer}<br><small style="color:#999">${o.email||''}</small>${phone?`<br><small>${phone}</small>`:''}${addrLine?`<br><small style="color:#666">${addrLine}</small>`:''}</td>
+      <td>${(o.items||[]).map(it=>`${(it.name||'').slice(0,18)}…×${it.qty}`).join('<br>')}</td>
+      <td>₹${o.total}</td>
+      <td><select onchange="updStatus('${o.id}',this.value)">${['pending','processing','shipped','delivered','cancelled'].map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}</select></td>
+    </tr>`;
+  }).join('');
+}
+function updStatus(id,st){const o=getO();const x=o.find(i=>i.id===id);if(x){x.status=st;saveO(o);toast(id+' → '+st);}}
+function renderAdminCusts(){document.getElementById('as-customers').innerHTML=getC().map(c=>`<tr><td>${c.name}</td><td>${c.email}</td><td>${c.orders}</td><td>₹${c.spent}</td></tr>`).join('');}
+function renderAdminAnalytics(){
+  const p=getP(),o=getO();
+  const paidOrders=o.filter(x=>x.status!=='cancelled');
+
+  document.getElementById('as-inv').textContent='₹'+p.reduce((s,x)=>s+x.price*x.stock,0);
+
+  const totalRev=paidOrders.reduce((s,x)=>s+x.total,0);
+  document.getElementById('as-totrev').textContent='₹'+totalRev;
+  document.getElementById('as-aov').textContent='₹'+(paidOrders.length?Math.round(totalRev/paidOrders.length):0);
+
+  const days=[];
+  for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
+  const revByDay={};days.forEach(d=>revByDay[d]=0);
+  paidOrders.forEach(ord=>{if(revByDay[ord.date]!==undefined)revByDay[ord.date]+=ord.total;});
+  const maxRev=Math.max(1,...days.map(d=>revByDay[d]));
+  document.getElementById('as-revchart').innerHTML=days.map(d=>{
+    const v=revByDay[d];const h=Math.max(2,Math.round((v/maxRev)*100));
+    const lbl=d.slice(5).replace('-','/');
+    return `<div style="flex:1;min-width:20px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">
+      <div title="₹${v} on ${d}" style="width:100%;background:var(--navy,#1a2942);border-radius:3px 3px 0 0;height:${h}%"></div>
+      <div style="font-size:8px;color:#999;margin-top:4px">${lbl}</div>
+    </div>`;
+  }).join('');
+
+  const cats={};
+  paidOrders.forEach(ord=>{ord.items.forEach(i=>{const pr=p.find(x=>x.id===i.id);const c=pr?pr.category:'Other';cats[c]=(cats[c]||0)+i.price*i.qty;});});
+  document.getElementById('as-cats').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div class="stat-box" style="margin-bottom:8px"><div class="lbl">${c}</div><div class="val" style="font-size:18px">₹${v}</div></div>`).join('')||'<p style="color:#999">No sales yet</p>';
+
+  const prodStats={};
+  paidOrders.forEach(ord=>{ord.items.forEach(i=>{if(!prodStats[i.id])prodStats[i.id]={name:i.name,units:0,rev:0};prodStats[i.id].units+=i.qty;prodStats[i.id].rev+=i.price*i.qty;});});
+  const top5=Object.values(prodStats).sort((a,b)=>b.rev-a.rev).slice(0,5);
+  document.getElementById('as-topprods').innerHTML=top5.map(x=>`<tr><td>${x.name}</td><td>${x.units}</td><td>₹${x.rev}</td></tr>`).join('')||'<tr><td colspan="3" style="color:#999">No sales yet</td></tr>';
+
+  const statusCounts={};
+  o.forEach(ord=>{statusCounts[ord.status]=(statusCounts[ord.status]||0)+1;});
+  document.getElementById('as-status').innerHTML=Object.entries(statusCounts).map(([st,ct])=>`<div class="stat-box"><div class="lbl">${st}</div><div class="val">${ct}</div></div>`).join('')||'<p style="color:#999">No orders yet</p>';
+}
+
+async function doLogin(){
+  const pw=document.getElementById('login-pw').value;
+  if(!pw){toast('Enter password');return;}
+  if(isLockedOut()){const s=getFailState();const mins=Math.ceil((s.until-Date.now())/60000);toast('Too many attempts — try in '+mins+' min');return;}
+  const btn=document.querySelector('.btn-login');
+  if(btn){btn.disabled=true;btn.textContent='Signing in…';}
+
+  // Server-side admin auth is the source of truth. Local storage is only a
+  // convenience cache for this one browser, and only ever used when the
+  // backend cannot be reached at all — never when it actively rejects the
+  // password (that would let a stale local copy override a real "wrong
+  // password" answer from the server).
+  let backendReachable=false;
+  try{
+    const res=await fetch(BACKEND_URL+'/api/admin/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:pw})
+    });
+    backendReachable=true;
+    if(res.ok){
+      const data=await res.json();
+      if(data.token){
+        localStorage.setItem(K.adminTok,data.token);
+        localStorage.setItem(K.auth,'1');
+        // Cache a hash of this password locally so the admin panel can still
+        // be opened if the backend is briefly unreachable later.
+        localStorage.setItem(K.pwHash, await sha256Hex(pw));
+        localStorage.removeItem(K.pw);
+        clearFails();
+        document.getElementById('login-screen').style.display='none';
+        document.getElementById('admin').style.display='block';
+        migrateProductsIfNeeded().then(()=>adminTab('dash',document.querySelector('.admin-nav button')));
+        if(btn){btn.disabled=false;btn.textContent='Sign in';}
+        toast('Signed in (server)');
+        return;
+      }
+    }else{
+      // Backend responded — this is a definitive answer (wrong password,
+      // rate-limited, etc). Do not fall back to a local check.
+      registerFail();
+      const data=await res.json().catch(()=>({}));
+      toast(data.error||'Wrong password');
+      if(btn){btn.disabled=false;btn.textContent='Sign in';}
+      return;
+    }
+  }catch(e){/* network error — backend unreachable, fall back to local cache below */ }
+
+  if(backendReachable){
+    // Reached the server but it didn't return a token for some other reason.
+    registerFail();
+    toast('Login failed');
+    if(btn){btn.disabled=false;btn.textContent='Sign in';}
+    return;
+  }
+
+  // Local fallback — only usable once a password has previously been
+  // confirmed against the server on this browser (see cache above). There is
+  // no bootstrap/default password: if nothing is cached yet, the backend
+  // must be reachable to log in the first time.
+  try{
+    const storedHash=localStorage.getItem(K.pwHash);
+    const inputHash=await sha256Hex(pw);
+    let ok=false;
+    if(storedHash){
+      ok = storedHash===inputHash;
+    }else if(localStorage.getItem(K.pw)){
+      ok = pw===localStorage.getItem(K.pw);
+      if(ok){ // migrate plaintext -> hash
+        localStorage.setItem(K.pwHash, inputHash);
+        localStorage.removeItem(K.pw);
+      }
+    }
+    if(ok){
+      toast('Signed in from local cache — reconnect to the server soon to refresh admin data');
+      localStorage.setItem(K.auth,'1');
+      clearFails();
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('admin').style.display='block';
+      migrateProductsIfNeeded().then(()=>adminTab('dash',document.querySelector('.admin-nav button')));
+    }else{
+      registerFail();
+      toast(storedHash||localStorage.getItem(K.pw) ? 'Wrong password' : 'Backend unavailable — cannot sign in yet on this browser');
+    }
+  }catch(err){
+    console.error(err);
+    toast('Login failed');
+  }
+  if(btn){btn.disabled=false;btn.textContent='Sign in';}
+}
+function adminLogout(){localStorage.removeItem(K.auth);localStorage.removeItem(K.adminTok);location.reload();}
+
+async function changePassword(){
+  toast('This updates the sign-in cache on this browser only. The real admin password lives on the server (ADMIN_PASSWORD) — change it there too, in Render\'s environment settings.');
+  const oldPw=prompt('Enter your current password:');
+  if(oldPw===null)return;
+  const storedHash=localStorage.getItem(K.pwHash);
+  const oldHash=await sha256Hex(oldPw);
+  const okLocal = storedHash ? storedHash===oldHash : (oldPw===localStorage.getItem(K.pw));
+  if(!okLocal){toast('Current password is incorrect');return;}
+  const newPw=prompt('Enter your new password (min 10 characters):');
+  if(newPw===null)return;
+  if(newPw.trim().length<10){toast('Use at least 10 characters');return;}
+  const confirmPw=prompt('Re-enter your new password to confirm:');
+  if(confirmPw===null)return;
+  if(newPw!==confirmPw){toast('Passwords did not match — nothing changed');return;}
+  const h=await sha256Hex(newPw);
+  localStorage.setItem(K.pwHash,h);
+  localStorage.removeItem(K.pw);
+  toast('Password changed successfully');
+}
+
+function clearAnalytics(){
+  if(!confirm('This will permanently delete all orders and reset revenue/analytics data. Products and customers stay untouched. Continue?'))return;
+  const pw=prompt('Enter admin password to confirm:');
+  if(pw===null)return;
+  if(pw!==getPw()){toast('Wrong password — nothing was cleared');return;}
+  saveO([]);
+  renderAdminAnalytics();
+  renderDash();
+  toast('Analytics data cleared');
+}
+
+function clearOrders(){
+  if(!confirm('This will permanently delete all order records. Customers and products stay untouched. Continue?'))return;
+  const pw=prompt('Enter admin password to confirm:');
+  if(pw===null)return;
+  if(pw!==getPw()){toast('Wrong password — nothing was cleared');return;}
+  saveO([]);
+  renderAdminOrders();
+  renderDash();
+  toast('Order data cleared');
+}
+
+function clearCustomers(){
+  if(!confirm('This will permanently delete all customer records. Orders and products stay untouched. Continue?'))return;
+  const pw=prompt('Enter admin password to confirm:');
+  if(pw===null)return;
+  if(pw!==getPw()){toast('Wrong password — nothing was cleared');return;}
+  saveC([]);
+  renderAdminCusts();
+  renderDash();
+  toast('Customer data cleared');
+}
+if(localStorage.getItem(K.auth)==='1'){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('admin').style.display='block';
+  migrateProductsIfNeeded().then(()=>adminTab('dash',document.querySelector('.admin-nav button')));
+}else{
+  // Still migrate in background so products are ready after login
+  migrateProductsIfNeeded();
+}
+</script>
+</body>
+</html>
